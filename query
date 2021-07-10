@@ -1,0 +1,48 @@
+-- (remaining swap tasks / number of DVs) * 100
+with "totalDV" as(
+select
+(select "name" from "GeoRegions" where "id" = v."cityId") "cityName"
+, case when (select "name" from "GeoRegions" where "id" = v."geofenceId") like '%NP Zone'
+        then left((select "name" from "GeoRegions" where "id" = v."geofenceId"), -8)
+    when (select "name" from "GeoRegions" where "id" = v."geofenceId") like '%NP Zones'
+        then left((select "name" from "GeoRegions" where "id" = v."geofenceId"), -9) 
+    when (select "name" from "GeoRegions" where "id" = v."geofenceId") like '%school zone'
+        then left((select "name" from "GeoRegions" where "id" = v."geofenceId"), -12)
+    else (select "name" from "GeoRegions" where "id" = v."geofenceId")
+    end as "geoName"
+, count("id") "totalDV"
+from "Vehicles" v
+where "cityId" in (121, 612, 341, 416)
+and "status" in (0, 2)
+and "lostAndHiddenFromMaps" is false
+group by 1,2
+)
+
+, "task" as(
+select
+(select "name" from "GeoRegions" where "id" = t."cityId") "cityName"
+, case when (select "name" from "GeoRegions" where "id" = t."geofenceId") like '%NP Zone'
+        then left((select "name" from "GeoRegions" where "id" = t."geofenceId"), -8)
+    when (select "name" from "GeoRegions" where "id" = t."geofenceId") like '%NP Zones'
+        then left((select "name" from "GeoRegions" where "id" = t."geofenceId"), -9) 
+    when (select "name" from "GeoRegions" where "id" = t."geofenceId") like '%school zone'
+        then left((select "name" from "GeoRegions" where "id" = t."geofenceId"), -12)
+    else (select "name" from "GeoRegions" where "id" = t."geofenceId")
+    end as "geoName"
+, count("id")
+from "Tasks" t
+where "queryName" = 'LOW_BATTERY_SWAPPABLE'
+and "cityId" in (121, 612, 341, 416)
+and timezone('kst', "createdAt") > now() - '50 hours'::interval
+and "status" in (0, 1)
+group by 1,2
+)
+
+select 
+"totalDV"."cityName" as "City Name"
+, "totalDV"."geoName" as "Geofence Name"
+, "task"."count" as "Total # of Remaining Tasks"
+, "totalDV"."totalDV" as "Total DV"
+, concat(round(("task"."count"*100/"totalDV"."totalDV"::decimal), 2), '%') as "Remaining Tasks %"
+from "totalDV" 
+join "task" on "totalDV"."geoName" = "task"."geoName"

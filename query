@@ -12,8 +12,8 @@ select
     end as "geoName"
 , count("id") "totalDV"
 from "Vehicles" v
-where "cityId" in (121, 612, 341, 416)
-and "status" in (0, 2)
+where "cityId" in ( )
+and "status" in ( )
 and "lostAndHiddenFromMaps" is false
 group by 1,2
 )
@@ -32,9 +32,9 @@ select
 , count("id")
 from "Tasks" t
 where "queryName" = 'LOW_BATTERY_SWAPPABLE'
-and "cityId" in (121, 612, 341, 416)
-and timezone('kst', "createdAt") > now() - '50 hours'::interval
-and "status" in (0, 1)
+and "cityId" in ( )
+and timezone('kst', "createdAt") > now() - '-- hours'::interval
+and "status" in ( )
 group by 1,2
 )
 
